@@ -1,0 +1,82 @@
+<!DOCTYPE html> 
+<html>
+    <head>
+        <title>WhosApp</title>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <h1 id="heading" >WhosApp prototype</h1>
+        <div id="login_form">
+            <h2>what ur name?</h2>
+            <input id="user_name"/><br><br>
+            <button onclick="login()">Submit</button>
+        </div>
+        <div id ="content" style="display: none;">
+            <ul id="messages">
+            </ul>
+            <form id = "form" action="">
+                <div style="font-size: large;">
+                    <strong id="username_local"></strong> &nbsp;says&nbsp;
+                </div>
+                <input id="input" autocomplete="off"/>
+                <button>Send</button>
+            </form>
+        </div>
+
+        <!-- <script src="script.js"></script> -->
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io();
+
+var user_name;
+function login(){
+    user_name = document.getElementById("user_name").value;
+    console.log(user_name);
+    if(user_name!==undefined && user_name!==""){
+        document.getElementById("login_form").style.display = "none";
+        document.getElementById("content").style.display = "";
+        document.getElementById('username_local').innerText = user_name;
+        socket.emit('user-join',user_name);
+        return;
+    }
+    return(alert("enter a name mf"));
+}
+
+var messages = document.getElementById('messages');
+var form = document.getElementById('form');
+var input = document.getElementById('input');
+
+form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    if(input.value) {
+        socket.emit('chat-message', {"user_name":user_name, "message":input.value})
+        input.value = "";
+    }
+})
+
+socket.on('chat-message', (chat_message)=>{
+    var item = document.createElement('li');
+    item.innerHTML = "<strong>"+chat_message.user_name+"</strong>"+" "+chat_message.message;
+    messages.appendChild(item);
+    window.scrollTo(0,document.body.scrollHeight);
+})
+
+socket.on('new-user',(newuser)=>{
+    console.log(newuser);
+    var item = document.createElement('li');
+    item.innerHTML = "<strong>"+newuser.user+" has joined the room.</strong>"
+    messages.appendChild(item);
+    window.scrollTo(0,document.body.scrollHeight);
+})
+
+socket.on('user-left',(leftuser)=>{
+    console.log(leftuser);
+    var item = document.createElement('li');
+    item.innerHTML = "<strong>"+leftuser.user+" has left the room.</strong>"
+    messages.appendChild(item);
+    window.scrollTo(0,document.body.scrollHeight);
+})
+        </script>
+        
+    </body>
+</html> 
